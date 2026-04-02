@@ -1,9 +1,11 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const prisma = require("../lib/prisma");
+const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
+// registeration
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -31,6 +33,56 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+// login
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Basic validation
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+
+    // Find user
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Compare password
+    const isValid = await bcrypt.compare(password, user.password);
+
+    if (!isValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false, // ⚠️ true in production (HTTPS)
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    // Response
+    res.json({ message: "Logged in successfully" });
+  } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal server error" });
   }
