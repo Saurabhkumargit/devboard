@@ -1,11 +1,12 @@
-const express = require("express");
-const bcrypt = require("bcrypt");
-const prisma = require("../lib/prisma");
-const jwt = require("jsonwebtoken");
+import express from "express";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import prisma from "../lib/prisma.js";
+import authMiddleware from "../middleware/auth.js";
 
 const router = express.Router();
 
-// registeration
+// registration
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -77,7 +78,7 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
       sameSite: "lax",
       secure: false, // true in production (HTTPS)
-      maxAge: 7 * 24 * 60 * 60 * 1000
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     // Response
@@ -88,4 +89,12 @@ router.post("/login", async (req, res) => {
   }
 });
 
-module.exports = router;
+
+// me
+router.get("/me", authMiddleware, async (req, res) => {
+  res.json({
+    userId: req.user.id,
+  });
+});
+
+export default router;

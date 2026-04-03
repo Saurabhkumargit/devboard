@@ -1,9 +1,9 @@
-require("dotenv").config();
+import "dotenv/config";
 
-const express = require("express");
-const cookieParser = require("cookie-parser");
+import express from "express";
+import cookieParser from "cookie-parser";
 
-const authRoutes = require("./routes/auth");
+import authRoutes from "./routes/auth.js";
 
 const app = express();
 
