@@ -11,10 +11,61 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String         @id @default(uuid())
+  email     String         @unique
   password  String
   name      String
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
+
+  boards    BoardMember[]
+  tasks     Task[]
+}
+
+model Board {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime       @default(now())
+
+  members     BoardMember[]
+  tasks       Task[]
+}
+
+model BoardMember {
+  id        String   @id @default(uuid())
+  userId    String
+  boardId   String
+  role      Role     @default(MEMBER)
+  joinedAt  DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  board Board @relation(fields: [boardId], references: [id])
+
+  @@unique([userId, boardId]) // prevent duplicates
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+  boardId     String
+  assigneeId  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  board    Board @relation(fields: [boardId], references: [id])
+  assignee User? @relation(fields: [assigneeId], references: [id])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
 }
