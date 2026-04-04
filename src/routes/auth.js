@@ -5,7 +5,7 @@ import prisma from "../lib/prisma.js";
 import authMiddleware from "../middleware/auth.js";
 import redis from "../lib/redis.js";
 import rateLimiter from "../middleware/rateLimiter.js";
-
+import { v4 as uuidv4 } from "uuid";
 
 const router = express.Router();
 
@@ -42,7 +42,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-
 // login
 router.post("/login", rateLimiter, async (req, res) => {
   try {
@@ -71,9 +70,12 @@ router.post("/login", rateLimiter, async (req, res) => {
 
     // Generate JWT
     const token = jwt.sign(
-      { userId: user.id },
+      {
+        userId: user.id,
+        jti: uuidv4(),
+      },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "1d" },
     );
 
     // Set cookie
@@ -81,7 +83,7 @@ router.post("/login", rateLimiter, async (req, res) => {
       httpOnly: true,
       sameSite: "lax",
       secure: false, // true in production (HTTPS)
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     // Response
@@ -93,6 +95,35 @@ router.post("/login", rateLimiter, async (req, res) => {
 });
 
 
+// logout
+router.post("/logout", async (req, res) => {
+  try {
+    const token = req.cookies?.token;
+
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      const ttl = decoded.exp - Math.floor(Date.now() / 1000);
+
+      if (ttl > 0) {
+        await redis.set(
+          `blacklist:${decoded.jti}`,
+          "true",
+          "EX",
+          ttl
+        );
+      }
+    }
+
+    // Clear cookie
+    res.clearCookie("token");
+
+    res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    res.clearCookie("token");
+    res.json({ message: "Logged out" });
+  }
+});
 
 // // me
 // router.get("/me", authMiddleware, async (req, res) => {
@@ -100,7 +131,6 @@ router.post("/login", rateLimiter, async (req, res) => {
 //     userId: req.user.id,
 //   });
 // });
-
 
 // router.get("/redis-test", async (req, res) => {
 //   await redis.set("test", "hello", "EX", 10);
@@ -110,6 +140,5 @@ router.post("/login", rateLimiter, async (req, res) => {
 //   res.json({ value });
 // });
 
-
-
 export default router;
+

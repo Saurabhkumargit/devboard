@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import redis from "../lib/redis.js";
 
-export default function auth(req, res, next) {
+export default async function auth(req, res, next) {
   try {
     // Extract token from cookie
     const token = req.cookies?.token;
@@ -11,6 +12,13 @@ export default function auth(req, res, next) {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if token is blacklisted
+    const isBlocked = await redis.get(`blacklist:${decoded.jti}`);
+
+    if (isBlocked) {
+      return res.status(401).json({ message: "Token invalidated" });
+    }
 
     // Attach user to request
     req.user = {
