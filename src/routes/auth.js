@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma.js";
 import authMiddleware from "../middleware/auth.js";
+import redis from "../lib/redis.js";
 
 const router = express.Router();
 
@@ -96,5 +97,16 @@ router.get("/me", authMiddleware, async (req, res) => {
     userId: req.user.id,
   });
 });
+
+
+router.get("/redis-test", async (req, res) => {
+  await redis.set("test", "hello", "EX", 10);
+
+  const value = await redis.get("test");
+
+  res.json({ value });
+});
+
+
 
 export default router;
