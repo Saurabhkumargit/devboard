@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import prisma from "../lib/prisma.js";
 import authMiddleware from "../middleware/auth.js";
 import redis from "../lib/redis.js";
+import rateLimiter from "../middleware/rateLimiter.js";
+
 
 const router = express.Router();
 
@@ -42,7 +44,7 @@ router.post("/register", async (req, res) => {
 
 
 // login
-router.post("/login", async (req, res) => {
+router.post("/login", rateLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -91,21 +93,22 @@ router.post("/login", async (req, res) => {
 });
 
 
-// me
-router.get("/me", authMiddleware, async (req, res) => {
-  res.json({
-    userId: req.user.id,
-  });
-});
+
+// // me
+// router.get("/me", authMiddleware, async (req, res) => {
+//   res.json({
+//     userId: req.user.id,
+//   });
+// });
 
 
-router.get("/redis-test", async (req, res) => {
-  await redis.set("test", "hello", "EX", 10);
+// router.get("/redis-test", async (req, res) => {
+//   await redis.set("test", "hello", "EX", 10);
 
-  const value = await redis.get("test");
+//   const value = await redis.get("test");
 
-  res.json({ value });
-});
+//   res.json({ value });
+// });
 
 
 
