@@ -9,24 +9,27 @@ router.post("/", authMiddleware, async (req, res) => {
   try {
     const { name, description } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ message: "Name is required" });
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return res.status(400).json({ message: "Valid name is required" });
     }
 
     const userId = req.user.id;
 
-    // Create board
-    const board = await prisma.board.create({
-      data: { name, description },
-    });
+    // Create board and add creator as ADMIN member within a transaction
+    const board = await prisma.$transaction(async (tx) => {
+      const board = await tx.board.create({
+        data: { name, description },
+      });
 
-    // Add creator as ADMIN member
-    await prisma.boardMember.create({
-      data: {
-        userId,
-        boardId: board.id,
-        role: "ADMIN",
-      },
+      await tx.boardMember.create({
+        data: {
+          userId,
+          boardId: board.id,
+          role: "ADMIN",
+        },
+      });
+
+      return board;
     });
 
     res.status(201).json(board);
@@ -116,14 +119,139 @@ router.delete("/:boardId", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "Board not found" });
     }
 
-    // 3. Delete board
-    await prisma.board.delete({
-      where: { id: boardId },
-    });
+    // 3. Delete related data (Tasks, Members) first, then the board to avoid FK constraints
+    await prisma.$transaction([
+      prisma.task.deleteMany({ where: { boardId } }),
+      prisma.boardMember.deleteMany({ where: { boardId } }),
+      prisma.board.delete({ where: { id: boardId } }),
+    ]);
 
     res.json({ message: "Board deleted successfully" });
   } catch (err) {
+    console.error("Error in DELETE /boards:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+router.post("/:boardId/members", authMiddleware, async (req, res) => {
+  try {
+    const requesterId = req.user.id;
+    const { boardId } = req.params;
+    const { userId } = req.body;
+
+    // 1. Validate input
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+
+    // 2. Check requester is ADMIN
+    const membership = await prisma.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId: requesterId,
+          boardId,
+        },
+      },
+    });
+
+    if (!membership || membership.role !== "ADMIN") {
+      return res.status(404).json({ message: "Board not found" });
+    }
+
+    // 3. Check target user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 4. Add as MEMBER (do NOT trust client role)
+    await prisma.boardMember.create({
+      data: {
+        userId,
+        boardId,
+        role: "MEMBER",
+      },
+    });
+
+    res.status(201).json({ message: "User added to board" });
+  } catch (err) {
+    // handle duplicate membership
+    if (err.code === "P2002") {
+      return res.status(400).json({ message: "User already a member" });
+    }
+
     console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+router.delete("/:boardId/members/:userId", authMiddleware, async (req, res) => {
+  try {
+    const requesterId = req.user.id;
+    const { boardId, userId } = req.params;
+
+    // 1. Check requester is ADMIN
+    const requesterMembership = await prisma.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId: requesterId,
+          boardId,
+        },
+      },
+    });
+
+    if (!requesterMembership || requesterMembership.role !== "ADMIN") {
+      return res.status(404).json({ message: "Board not found" });
+    }
+
+    // 2. Check target membership
+    const targetMembership = await prisma.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId,
+          boardId,
+        },
+      },
+    });
+
+    if (!targetMembership) {
+      return res.status(404).json({ message: "Member not found" });
+    }
+
+    // 3. Prevent removing last admin
+    if (targetMembership.role === "ADMIN") {
+      const adminCount = await prisma.boardMember.count({
+        where: {
+          boardId,
+          role: "ADMIN",
+        },
+      });
+
+      if (adminCount === 1) {
+        return res.status(400).json({
+          message: "Cannot remove the last admin",
+        });
+      }
+    }
+
+    // 4. Remove member
+    await prisma.boardMember.delete({
+      where: {
+        userId_boardId: {
+          userId,
+          boardId,
+        },
+      },
+    });
+
+    res.json({ message: "Member removed successfully" });
+  } catch (err) {
+    console.error("Error removing member:", err);
     res.status(500).json({ message: "Internal server error" });
   }
 });
