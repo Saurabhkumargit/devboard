@@ -256,4 +256,188 @@ router.delete("/:boardId/members/:userId", authMiddleware, async (req, res) => {
   }
 });
 
+
+router.post("/:boardId/tasks", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { boardId } = req.params;
+    const { title, description } = req.body;
+
+    // 1. Validate input
+    if (!title || typeof title !== "string" || title.trim().length === 0) {
+      return res.status(400).json({ message: "Valid title is required" });
+    }
+
+    // 2. Check membership (authorization)
+    const membership = await prisma.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId,
+          boardId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+
+    // 3. Create task
+    const task = await prisma.task.create({
+      data: {
+        title,
+        description,
+        boardId,
+        assigneeId: userId, // optional: assign creator by default
+      },
+    });
+
+    res.status(201).json(task);
+  } catch (err) {
+    console.error("Error creating task:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+router.get("/:boardId/tasks", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { boardId } = req.params;
+
+    const tasks = await prisma.task.findMany({
+      where: {
+        boardId,
+        board: {
+          members: {
+            some: {
+              userId,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        assigneeId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    // If no tasks AND user not a member → still return 404
+    if (tasks.length === 0) {
+      // verify membership explicitly
+      const membership = await prisma.boardMember.findUnique({
+        where: {
+          userId_boardId: {
+            userId,
+            boardId,
+          },
+        },
+      });
+
+      if (!membership) {
+        return res.status(404).json({ message: "Board not found" });
+      }
+    }
+
+    res.json(tasks);
+  } catch (err) {
+    console.error("Error fetching tasks:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+router.patch("/tasks/:taskId", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { taskId } = req.params;
+    const { title, description, status, assigneeId } = req.body;
+
+    // 1. Fetch task (trusted source)
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+    });
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // 2. Check membership using DB-derived boardId
+    const membership = await prisma.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId,
+          boardId: task.boardId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // 3. Update task (partial update)
+    const updatedTask = await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        ...(title && { title }),
+        ...(description && { description }),
+        ...(status && { status }),
+        ...(assigneeId && { assigneeId }),
+      },
+    });
+
+    res.json(updatedTask);
+  } catch (err) {
+    console.error("Error updating task:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
+router.delete("/tasks/:taskId", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { taskId } = req.params;
+
+    // 1. Fetch task
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+    });
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // 2. Check membership
+    const membership = await prisma.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId,
+          boardId: task.boardId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // 3. Delete task
+    await prisma.task.delete({
+      where: { id: taskId },
+    });
+
+    res.json({ message: "Task deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting task:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 export default router;
