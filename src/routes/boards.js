@@ -133,7 +133,6 @@ router.delete("/:boardId", authMiddleware, async (req, res) => {
   }
 });
 
-
 router.post("/:boardId/members", authMiddleware, async (req, res) => {
   try {
     const requesterId = req.user.id;
@@ -188,7 +187,6 @@ router.post("/:boardId/members", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 router.delete("/:boardId/members/:userId", authMiddleware, async (req, res) => {
   try {
@@ -256,7 +254,6 @@ router.delete("/:boardId/members/:userId", authMiddleware, async (req, res) => {
   }
 });
 
-
 router.post("/:boardId/tasks", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -298,7 +295,6 @@ router.post("/:boardId/tasks", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 router.get("/:boardId/tasks", authMiddleware, async (req, res) => {
   try {
@@ -351,7 +347,6 @@ router.get("/:boardId/tasks", authMiddleware, async (req, res) => {
   }
 });
 
-
 router.patch("/tasks/:taskId", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -398,7 +393,6 @@ router.patch("/tasks/:taskId", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
-
 
 router.delete("/tasks/:taskId", authMiddleware, async (req, res) => {
   try {
