@@ -39,6 +39,9 @@ jobs:
         ports:
           - 5432:5432
 
+        env:
+          DATABASE_URL: postgres://user:password@localhost:5432/devboard
+
       redis:
         image: redis:7-alpine
         ports:
