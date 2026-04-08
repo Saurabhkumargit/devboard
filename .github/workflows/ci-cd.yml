@@ -39,13 +39,15 @@ jobs:
         ports:
           - 5432:5432
 
-        env:
-          DATABASE_URL: postgres://user:password@localhost:5432/devboard
-
       redis:
         image: redis:7-alpine
         ports:
           - 6379:6379
+
+    # ✅ THIS is where DATABASE_URL should go
+    env:
+      DATABASE_URL: postgres://user:password@localhost:5432/devboard
+      REDIS_URL: redis://localhost:6379
 
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +57,9 @@ jobs:
           node-version: 20
 
       - run: npm install
+
+      # (optional but safer)
+      - run: npx prisma generate
 
       - run: npx prisma migrate deploy
 
@@ -71,10 +76,13 @@ jobs:
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      # ✅ build once, tag twice
       - name: Build image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/devboard:latest .
-          docker build -t ghcr.io/${{ github.repository }}/devboard:${{ github.sha }} .
+          docker build \
+            -t ghcr.io/${{ github.repository }}/devboard:latest \
+            -t ghcr.io/${{ github.repository }}/devboard:${{ github.sha }} \
+            .
 
       - name: Push image
         run: |
