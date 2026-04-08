@@ -10,18 +10,22 @@ permissions:
   contents: read
   packages: write
 
+# ✅ force future GitHub runtime (Node 24)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm install
@@ -48,23 +52,20 @@ jobs:
         ports:
           - 6379:6379
 
-    # ✅ THIS is where DATABASE_URL should go
     env:
       DATABASE_URL: postgres://user:password@localhost:5432/devboard
       REDIS_URL: redis://localhost:6379
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
 
       - run: npm install
 
-      # (optional but safer)
       - run: npx prisma generate
-
       - run: npx prisma migrate deploy
 
       - run: npm test || echo "No tests yet"
@@ -75,12 +76,11 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Login to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # ✅ build once, tag twice
       - name: Build image
         run: |
           docker build \
