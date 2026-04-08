@@ -80,11 +80,11 @@ jobs:
       - name: Build image
         run: |
           docker build \
-            -t ghcr.io/${{ github.repository }}/devboard:latest \
-            -t ghcr.io/${{ github.repository }}/devboard:${{ github.sha }} \
+            -t ghcr.io/saurabhkumargit/devboard:latest \
+            -t ghcr.io/saurabhkumargit/devboard:${{ github.sha }} \
             .
 
       - name: Push image
         run: |
-          docker push ghcr.io/${{ github.repository }}/devboard:latest
-          docker push ghcr.io/${{ github.repository }}/devboard:${{ github.sha }}
+          docker push ghcr.io/saurabhkumargit/devboard:latest
+          docker push ghcr.io/saurabhkumargit/devboard:${{ github.sha }}
