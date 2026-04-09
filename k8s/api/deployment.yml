@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devboard-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devboard-api
+  template:
+    metadata:
+      labels:
+        app: devboard-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/saurabhkumargit/devboard:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
