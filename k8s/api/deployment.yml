@@ -12,6 +12,16 @@ spec:
       labels:
         app: devboard-api
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z postgres-service 5432; do echo waiting for db; sleep 2; done;",
+            ]
+
       containers:
         - name: api
           image: ghcr.io/saurabhkumargit/devboard:latest
@@ -20,3 +30,12 @@ spec:
           env:
             - name: NODE_ENV
               value: "production"
+            - name: DATABASE_URL
+              value: postgresql://user:password@postgres-service:5432/devboard
+            - name: REDIS_URL
+              value: redis://redis-service:6379
+          resources:
+            requests:
+              cpu: "100m"
+            limits:
+              cpu: "500m" 
