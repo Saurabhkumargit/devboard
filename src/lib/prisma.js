@@ -1,4 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import prismaPkg from "@prisma/client";
+import { execSync } from "child_process";
+const { PrismaClient } = prismaPkg;
 import { PrismaPg } from "@prisma/adapter-pg";
 import pkg from "pg";
 
@@ -7,15 +9,32 @@ const { Pool } = pkg;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 
-const prisma = new PrismaClient({ adapter });
+const basePrisma = new PrismaClient({ adapter });
+
+const prisma = basePrisma.$extends({
+  query: {
+    async $allOperations({ query, args }) {
+      try {
+        return await query(args);
+      } catch (err) {
+        console.error("Query failed. Forcing reconnect...", err.message);
+        await basePrisma.$disconnect();
+        await basePrisma.$connect();
+        return await query(args);
+      }
+    },
+  },
+});
 
 async function connectWithRetry(maxRetries = 10) {
   let attempt = 0;
 
   while (attempt < maxRetries) {
     try {
-      await prisma.$connect();
-      console.log("Database connected");
+      await basePrisma.$queryRawUnsafe('SELECT 1');
+      console.log("Database connected. Running migrations...");
+      execSync("npx prisma migrate deploy", { stdio: "inherit" });
+      console.log("Migrations complete.");
       return;
     } catch (err) {
       attempt++;

@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
 import boardRoutes from "./routes/boards.js";
 
+import { initDB } from "./lib/prisma.js";
+
 const app = express();
 
 // middleware
@@ -22,6 +24,8 @@ app.get("/health", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+await initDB();
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
