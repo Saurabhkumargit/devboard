@@ -81,8 +81,8 @@ router.post("/login", rateLimiter, async (req, res) => {
     // Set cookie
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax",
-      secure: false, // true in production (HTTPS)
+      sameSite: "none",
+      secure: true, // required for sameSite: "none"
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -116,11 +116,19 @@ router.post("/logout", async (req, res) => {
     }
 
     // Clear cookie
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
 
     res.json({ message: "Logged out successfully" });
   } catch (err) {
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "none",
+      secure: true,
+    });
     res.json({ message: "Logged out" });
   }
 });

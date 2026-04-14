@@ -38,6 +38,7 @@ export const api = {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
     });
     return handleResponse(res);
   },
@@ -48,6 +49,7 @@ export const api = {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(data),
     });
     return handleResponse(res);
@@ -59,6 +61,7 @@ export const api = {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
       body: JSON.stringify(data),
     });
     return handleResponse(res);
@@ -70,6 +73,7 @@ export const api = {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "include",
     });
     return handleResponse(res);
   }
