@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import express from "express";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 import authRoutes from "./routes/auth.js";
 import boardRoutes from "./routes/boards.js";
@@ -14,6 +15,11 @@ import { initDB } from "./lib/prisma.js";
 const app = express();
 
 // middleware
+app.use(cors({
+  origin: "https://devboard-rouge.vercel.app",
+  credentials: true,
+}));
+app.options("*", cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(metricsMiddleware);
