@@ -33,7 +33,7 @@ async function handleResponse(res) {
 
 export const api = {
   get: async (endpoint) => {
-    const res = await fetch(`/api${endpoint}`, {
+    const res = await fetch(`https://devboard-production-d06c.up.railway.app/api${endpoint}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -43,7 +43,7 @@ export const api = {
   },
   
   post: async (endpoint, data) => {
-    const res = await fetch(`/api${endpoint}`, {
+    const res = await fetch(`https://devboard-production-d06c.up.railway.app/api${endpoint}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export const api = {
   },
 
   patch: async (endpoint, data) => {
-    const res = await fetch(`/api${endpoint}`, {
+    const res = await fetch(`https://devboard-production-d06c.up.railway.app/api${endpoint}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -65,7 +65,7 @@ export const api = {
   },
 
   delete: async (endpoint) => {
-    const res = await fetch(`/api${endpoint}`, {
+    const res = await fetch(`https://devboard-production-d06c.up.railway.app/api${endpoint}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

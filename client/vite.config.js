@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://devboard-production-d06c.up.railway.app',
         changeOrigin: true,
       }
     }
