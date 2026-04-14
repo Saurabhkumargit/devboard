@@ -13,11 +13,12 @@ export default async function auth(req, res, next) {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Check if token is blacklisted
-    const isBlocked = await redis.get(`blacklist:${decoded.jti}`);
-
-    if (isBlocked) {
-      return res.status(401).json({ message: "Token invalidated" });
+    // Check if token is blacklisted (only if Redis is available)
+    if (redis.status === "ready") {
+      const isBlocked = await redis.get(`blacklist:${decoded.jti}`);
+      if (isBlocked) {
+        return res.status(401).json({ message: "Token invalidated" });
+      }
     }
 
     // Attach user to request
