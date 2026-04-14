@@ -81,9 +81,9 @@ router.post("/login", rateLimiter, async (req, res) => {
     // Set cookie
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "none",
-      secure: true, // required for sameSite: "none"
-      maxAge: 24 * 60 * 60 * 1000,
+      secure: true,        // REQUIRED (HTTPS)
+      sameSite: "none",    // REQUIRED (cross-site)
+      path: "/",
     });
 
     // Response
