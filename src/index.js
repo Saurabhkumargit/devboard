@@ -15,11 +15,12 @@ import { initDB } from "./lib/prisma.js";
 const app = express();
 
 // middleware
-app.use(cors({
+const corsOptions = {
   origin: "https://devboard-rouge.vercel.app",
   credentials: true,
-}));
-app.options("*", cors());
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(metricsMiddleware);
