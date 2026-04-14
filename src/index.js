@@ -14,14 +14,32 @@ import { initDB } from "./lib/prisma.js";
 
 const app = express();
 
-// ✅ BETTER CORS (works with Vercel + cookies)
+// 🔥 FORCE CORS HEADERS (handles EVERYTHING including preflight)
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://devboard-rouge.vercel.app");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+
+  // ✅ handle preflight requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+// optional (safe to keep)
 app.use(cors({
-  origin: true,          // allow dynamic origins (Vercel, previews, etc.)
+  origin: true,
   credentials: true,
 }));
-
-// ✅ HANDLE PREFLIGHT REQUESTS
-app.options("*", cors());
 
 // middlewares
 app.use(express.json());
