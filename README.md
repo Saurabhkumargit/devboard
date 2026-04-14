@@ -1,5 +1,7 @@
 # 🚀 DevBoard — Full-Stack DevOps-Driven Task Management Platform
 
+🔗 **Live Demo:** [https://devboard-rouge.vercel.app](https://devboard-rouge.vercel.app/)
+
 ## 📌 Overview
 
 DevBoard is a production-grade, full-stack task and board management system designed to demonstrate **backend engineering, DevOps practices, and system design principles**.
@@ -171,6 +173,8 @@ npm run dev
 
 ## 🌐 Production Deployment
 
+🔗 **Live URL:** [https://devboard-rouge.vercel.app](https://devboard-rouge.vercel.app/)
+
 ### Frontend
 
 * Hosted on **Vercel**
@@ -224,6 +228,16 @@ GET /metrics
 * Error Rate (5xx)
 * P95 Latency
 * Pod scaling (HPA)
+
+### 📸 Observability Screenshots
+
+#### Prometheus Metrics
+
+![Prometheus Dashboard](demo/prometheus1.png)
+
+#### Grafana Dashboard
+
+![Grafana Dashboard](demo/grafana1.png)
 
 ---
 
