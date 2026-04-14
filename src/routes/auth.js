@@ -33,7 +33,7 @@ router.post("/register", async (req, res) => {
       email: user.email,
     });
   } catch (err) {
-    if (err.code === "P2002") {
+    if (err.code === "P2002" || (err.message && err.message.includes("Unique constraint failed"))) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
@@ -105,7 +105,7 @@ router.post("/logout", async (req, res) => {
 
       const ttl = decoded.exp - Math.floor(Date.now() / 1000);
 
-      if (ttl > 0) {
+      if (ttl > 0 && redis.status === "ready") {
         await redis.set(
           `blacklist:${decoded.jti}`,
           "true",

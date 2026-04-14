@@ -9,6 +9,10 @@ export default async function rateLimiter(req, res, next) {
 
     const key = `rate_limit:${ip}`;
 
+    if (redis.status !== "ready") {
+      return next(); // Fail open silently if Redis is not connected
+    }
+
     const requests = await redis.incr(key);
 
     // set expiry only on first request
