@@ -14,13 +14,16 @@ import { initDB } from "./lib/prisma.js";
 
 const app = express();
 
-// middleware
-const corsOptions = {
-  origin: "https://devboard-rouge.vercel.app",
+// ✅ BETTER CORS (works with Vercel + cookies)
+app.use(cors({
+  origin: true,          // allow dynamic origins (Vercel, previews, etc.)
   credentials: true,
-};
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+}));
+
+// ✅ HANDLE PREFLIGHT REQUESTS
+app.options("*", cors());
+
+// middlewares
 app.use(express.json());
 app.use(cookieParser());
 app.use(metricsMiddleware);
